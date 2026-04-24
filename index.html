@@ -3,30 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project: MORRIS // 1988 - REDEMPTION</title>
+    <title>Project: MORRIS // 1988 - EXTENDED</title>
     <style>
-        body {
-            background-color: #0a0a0a;
-            color: #4af626;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            overflow: hidden;
-            text-shadow: 0 0 5px #4af626;
-            transition: background-color 1s;
-        }
-
-        #status-bar {
-            display: flex; justify-content: space-between;
-            background-color: #1a1a1a; padding: 5px 15px;
-            font-size: 0.9rem; border: 1px solid #4af626; margin-bottom: 10px;
-        }
-
-        #terminal {
-            height: 75vh; border: 1px solid #4af626; padding: 20px;
-            overflow-y: auto; background-color: #000; position: relative;
-        }
-
+        body { background-color: #0a0a0a; color: #4af626; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; overflow: hidden; text-shadow: 0 0 5px #4af626; transition: background-color 1s; }
+        #status-bar { display: flex; justify-content: space-between; background-color: #1a1a1a; padding: 5px 15px; font-size: 0.9rem; border: 1px solid #4af626; margin-bottom: 10px; }
+        #terminal { height: 75vh; border: 1px solid #4af626; padding: 20px; overflow-y: auto; background-color: #000; position: relative; }
         .log-line { margin: 3px 0; line-height: 1.4; word-wrap: break-word; }
         .sys-msg { color: #aaaaaa; text-shadow: none; }
         .alert-msg { color: #ff3333; font-weight: bold; text-shadow: 0 0 5px #ff3333; }
@@ -34,55 +15,25 @@
         .mail-flood { color: #0088ff; opacity: 0.7; font-size: 0.8rem; }
         .critical { color: #ff0000; font-weight: bold; }
         .success-msg { color: #00ff00; font-weight: bold; text-shadow: 0 0 8px #00ff00; }
-
         #input-line { display: flex; margin-top: 10px; }
-        #cmd-input {
-            background: transparent; border: none; color: #4af626;
-            font-family: inherit; font-size: 1rem; outline: none; flex-grow: 1;
-            text-shadow: 0 0 5px #4af626;
-        }
-
+        #cmd-input { background: transparent; border: none; color: #4af626; font-family: inherit; font-size: 1rem; outline: none; flex-grow: 1; text-shadow: 0 0 5px #4af626; }
         .shake { animation: shake 0.2s infinite; }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            50% { transform: translate(-1px, -2px); }
-            100% { transform: translate(1px, -1px); }
-        }
-
-        /* 剧场模式：回溯黑屏遮罩 */
-        #rewind-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: #000; z-index: 9999;
-            display: none; /* 修复：默认隐藏，避免阻断页面 */
-            justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 1.5s ease-in-out;
-        }
-        
-        #dialogue-text {
-            color: #fff; font-size: 1.5rem; font-family: "SimSun", "Songti SC", serif;
-            text-shadow: none; opacity: 0; transition: opacity 1s ease-in-out;
-            text-align: center; white-space: pre-line; letter-spacing: 2px;
-        }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, -1px); } }
+        #rewind-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        #dialogue-text { color: #fff; font-size: 1.5rem; font-family: "SimSun", serif; text-shadow: none; opacity: 0; transition: opacity 1s ease-in-out; text-align: center; white-space: pre-line; letter-spacing: 2px; }
     </style>
     <script>
-        // 全局错误捕获：如果黑屏是因为代码报错，这里会直接把错误显示出来
         window.onerror = function(msg, url, line) {
             document.body.innerHTML = `<div style="color:red; padding:30px; font-family:sans-serif; background:#000; height:100vh;">
-                <h2>⚠️ 终端系统崩溃 (JavaScript 错误)</h2>
-                <p><strong>错误信息:</strong> ${msg}</p>
-                <p><strong>报错行号:</strong> 第 ${line} 行</p>
-                <hr>
-                <p><strong>排查建议：</strong><br>1. 检查代码是否复制完整。<br>2. 确保文件保存时选择了 <b>UTF-8</b> 编码。</p>
-            </div>`;
+                <h2>⚠️ 系统崩溃</h2><p>${msg} (Line ${line})</p>
+                <p>请确保文件保存为 UTF-8 编码格式。</p></div>`;
             return false;
         };
     </script>
 </head>
 <body onclick="document.getElementById('cmd-input').focus()">
 
-    <div id="rewind-overlay">
-        <div id="dialogue-text"></div>
-    </div>
+    <div id="rewind-overlay"><div id="dialogue-text"></div></div>
 
     <div id="status-bar">
         <span>节点: Cornell-U-VAX</span>
@@ -108,33 +59,28 @@
         const dialogueText = document.getElementById('dialogue-text');
 
         let state = {
-            isTyping: false,
-            phase: 'intro',
-            fbiProgress: 0,
-            cpuLoad: 0.05,
-            isLogCleared: false,
-            mailInterval: null,
-            systemTickInterval: null
+            isTyping: false, phase: 'prep_make', fbiProgress: 0, cpuLoad: 0.05,
+            mailInterval: null, systemTickInterval: null, processKilled: false
         };
 
         const sleep = ms => new Promise(r => setTimeout(r, ms));
 
         function startSystemTick() {
             state.systemTickInterval = setInterval(() => {
-                if (state.phase === 'repairing' || state.phase === 'collapsed') {
-                    state.cpuLoad += 0.08;
-                    if (state.cpuLoad > 20) terminal.classList.add('shake');
-                    if (state.cpuLoad > 50 && state.phase !== 'collapsed') {
+                if (['struggle', 'hiding', 'repairing', 'collapsed'].includes(state.phase)) {
+                    state.cpuLoad += 0.15;
+                    if (state.cpuLoad > 15) terminal.classList.add('shake');
+                    if (state.cpuLoad > 40 && state.phase !== 'collapsed') {
                         state.phase = 'collapsed';
                         triggerMailFlood();
                     }
                     loadDisplay.innerText = `CPU负载: ${state.cpuLoad.toFixed(2)}`;
                 }
 
-                if (state.phase === 'hiding' && !state.isLogCleared) {
+                if ((state.phase === 'struggle' || state.phase === 'hiding')) {
                     state.fbiProgress += 1;
                     fbiDisplay.innerText = `FBI追踪进度: ${state.fbiProgress}%`;
-                    if (state.fbiProgress >= 100) gameOver("FBI 锁定了你的IP。");
+                    if (state.fbiProgress >= 100) gameOver("FBI 锁定了你的物理位置。你被捕了。");
                 }
             }, 1000);
         }
@@ -149,54 +95,75 @@
         });
 
         function handleCommand(cmd) {
-            if (state.phase === 'collapsed' && Math.random() > 0.5) {
-                cmd = cmd.replace(/./g, (c, i) => Math.random() > 0.7 ? ['#','@','!','?'][Math.floor(Math.random()*4)] : c);
+            if (state.phase === 'collapsed' && Math.random() > 0.4) {
+                cmd = cmd.replace(/./g, (c, i) => Math.random() > 0.6 ? ['#','*','!','&'][Math.floor(Math.random()*4)] : c);
             }
             
             echoText(`root@cornell:~# ${cmd}`, "user-cmd");
 
-            if (state.phase === 'intro') {
-                if (cmd === './worm') releaseWorm();
-                else typeText("程序已编译完成。请执行 './worm' 开始测试。", "sys-msg");
-            } 
-            else if (state.phase === 'hiding') {
-                if (cmd === 'rm -rf /var/log/lastlog' || cmd === 'clear logs') {
-                    state.isLogCleared = true;
-                    typeText("日志已擦除。追踪断开。但系统负载异常升高...", "sys-msg", () => {
-                        state.phase = 'repairing';
-                        typeText("\n[系统告警] 收到大量垃圾邮件。尝试输入 'patch' 发送补丁邮件挽救。", "alert-msg");
-                    });
-                }
+            // 阶段 1: 准备 (编译 -> 扫描 -> 释放)
+            if (state.phase === 'prep_make') {
+                if (cmd === 'help') typeText("指令: make (编译), scan (扫描), ./worm (执行)", "sys-msg");
+                else if (cmd === 'make') {
+                    typeText("gcc -o worm main.c prop.c...\n编译完成。无语法错误。", "sys-msg", () => state.phase = 'prep_scan');
+                } else typeText("请先输入 'make' 编译源码。", "alert-msg");
             }
+            else if (state.phase === 'prep_scan') {
+                if (cmd === 'scan') {
+                    typeText("扫描周边网络...\n发现目标: SunOS, VAX BSD.\n存在 sendmail 与 fingerd 漏洞。", "sys-msg", () => state.phase = 'prep_run');
+                } else typeText("缺少目标节点数据。请先执行 'scan'。", "alert-msg");
+            }
+            else if (state.phase === 'prep_run') {
+                if (cmd === './worm') releaseWorm();
+                else typeText("一切就绪。执行 './worm' 开始注入。", "sys-msg");
+            }
+            // 阶段 2: 爆发与挣扎 (查看进程 -> 尝试杀进程 -> 删日志躲避)
+            else if (state.phase === 'struggle') {
+                if (cmd === 'ps' || cmd === 'top') {
+                    typeText("PID   USER   %CPU  COMMAND\n1024  root   99.9  worm\n1025  root   98.2  worm\n1026  root   99.1  worm\n[系统提示] 蠕虫正在无限繁殖！尝试输入 'killall worm' 终止它！", "sys-msg");
+                } 
+                else if (cmd === 'killall worm' || cmd.startsWith('kill')) {
+                    typeText("发送 SIGTERM 信号...\n访问拒绝 / 进程生成速度超过销毁速度！\n[系统告警] FBI已介入溯源！快输入 'rm -rf /var/log/lastlog' 清除痕迹！", "alert-msg", () => state.phase = 'hiding');
+                }
+                else typeText("系统负载飙升！输入 'ps' 查看异常进程！", "alert-msg");
+            }
+            else if (state.phase === 'hiding') {
+                if (cmd.includes('rm ') && cmd.includes('log')) {
+                    typeText("本地日志已粉碎。FBI 追踪信号丢失。\n但外部网络依然在崩塌。输入 'ifconfig down' 尝试切断物理网络，或 'mail' 发送警告邮件。", "sys-msg", () => state.phase = 'repairing');
+                } else typeText("FBI 即将锁定 IP！快删除日志: 'rm -rf /var/log/lastlog'", "critical");
+            }
+            // 阶段 3: 尝试补救 (断网/发邮件 -> 彻底崩溃)
             else if (state.phase === 'repairing' || state.phase === 'collapsed') {
-                if (cmd === 'patch') {
-                    typeText("正在尝试分发补丁邮件...", "sys-msg", async () => {
+                if (cmd.includes('ifconfig')) {
+                    typeText("ifconfig: ioctl (SIOCGIFFLAGS): 资源暂时不可用。\n网卡驱动已死锁。", "critical");
+                }
+                else if (cmd === 'mail' || cmd === 'patch') {
+                    typeText("正在连接 SMTP 服务器...", "sys-msg", async () => {
                         await sleep(1000);
-                        typeText("FATAL ERROR: 邮件队列满。带宽耗尽。已无力回天。", "critical", () => {
+                        typeText("FATAL ERROR: 邮件队列已满。网线被海量复制包堵死。\n你的补救信件永远无法寄出。", "critical", () => {
                             triggerRewindSequence();
                         });
                     });
                 }
             }
+            // 阶段 4: 回溯与救赎
             else if (state.phase === 'rewinded') {
-                if (cmd === 'rm worm' || cmd === 'rm -rf worm') {
+                if (cmd === 'cat prop.c') {
+                    typeText("... \nif (magic_number == 1) { re_infect(); } // 致命的1/7强制感染逻辑\n...\n[提示] 代码逻辑无可挽回。输入 'rm worm' 毁掉它。", "sys-msg");
+                } else if (cmd === 'rm worm') {
                     deleteWorm();
-                } else if (cmd === './worm') {
-                    typeText("你刚经历了一场灾难，确定还要重蹈覆辙吗？请输入 'rm worm' 销毁它。", "alert-msg");
-                } else {
-                    typeText("它还静静地躺在硬盘里。输入 'rm worm' 彻底删除这个祸害。", "sys-msg");
-                }
+                } else typeText("输入 'cat prop.c' 查看罪魁祸首，或直接输入 'rm worm' 销毁它。", "sys-msg");
             }
         }
 
         function releaseWorm() {
             state.isTyping = true;
-            typeText("正在将 Payload 注入 ARPANET 底层...", "sys-msg", async () => {
+            typeText("Payload 注入中...", "sys-msg", async () => {
                 await sleep(1000);
                 output.innerHTML = '';
                 document.body.style.backgroundColor = "#200";
-                typeText("!!! 警报：ARPANET 瘫痪 !!!\n代码存在无限复制Bug，它已经失控了！FBI开始溯源！\n快输入 'rm -rf /var/log/lastlog' 擦除日志掩盖痕迹！", "alert-msg", () => {
-                    state.phase = 'hiding';
+                typeText("!!! 警报：网络级联失效 !!!\n程序未检测到退出阈值，开始在局域网内指数级增殖！\n输入 'ps' 检查系统进程！", "alert-msg", () => {
+                    state.phase = 'struggle';
                     state.isTyping = false;
                 });
             });
@@ -205,64 +172,48 @@
         function triggerMailFlood() {
             if (state.mailInterval) return;
             state.mailInterval = setInterval(() => {
-                const mailLogs = [
-                    ">> Incoming Mail: QUEUE FULL",
-                    ">> DEBUG: sendmail buffer overflow",
-                    ">> ERROR: Connection refused by MILNET",
-                    ">> ALERT: System Out of Memory"
-                ];
+                const logs = [">> Incoming: QUEUE FULL", ">> ERROR: buffer overflow", ">> MILNET: Connection refused", ">> kernel: Out of memory"];
                 const line = document.createElement('div');
                 line.className = "log-line mail-flood";
-                line.innerText = mailLogs[Math.floor(Math.random() * mailLogs.length)];
+                line.innerText = logs[Math.floor(Math.random() * logs.length)];
                 output.appendChild(line);
                 terminal.scrollTop = terminal.scrollHeight;
-            }, 400);
+            }, 300);
         }
 
         async function triggerRewindSequence() {
             state.isTyping = true;
             document.getElementById('input-line').style.display = 'none';
-
             clearInterval(state.mailInterval);
             clearInterval(state.systemTickInterval);
             terminal.classList.remove('shake');
 
             await sleep(1500);
-            
-            // 修复：先让它显示，再渐变，防止被 CSS 阻断
             rewindOverlay.style.display = 'flex';
             setTimeout(() => { rewindOverlay.style.opacity = 1; }, 50);
-            
             document.body.style.backgroundColor = "#0a0a0a"; 
 
             const lines = [
-                "“朋友，我闯大祸了。”",
-                "“什么事？”",
-                "“你看到网上的消息了吗？”",
-                "“看到了呀，这东西……我邮件发不出去。”",
-                "“……哥，帮帮我。”",
-                "“这代码是我写的。”",
-                "“我也不希望变成这样。”",
-                "“你能补救吗？……喂？喂？”"
+                "“朋友，我闯大祸了。”", "“什么事？”", "“你看到网上的消息了吗？”",
+                "“看到了呀，这东西……我邮件发不出去。”", "“……哥，帮帮我。”",
+                "“这代码是我写的。”", "“我也不希望变成这样。”", "“你能补救吗？……喂？喂？”"
             ];
 
             await sleep(2000);
-
             for (let line of lines) {
                 dialogueText.innerText = line;
                 dialogueText.style.opacity = 1;
-                let waitTime = line.includes("……") ? 3000 : 2200;
-                await sleep(waitTime); 
+                await sleep(line.includes("……") ? 3000 : 2000); 
                 dialogueText.style.opacity = 0;
-                await sleep(1000); 
+                await sleep(800); 
             }
 
             dialogueText.style.fontFamily = "'Courier New', Courier, monospace";
             dialogueText.style.color = "#4af626";
             dialogueText.style.letterSpacing = "normal";
-            dialogueText.innerText = "[ 时空发生塌缩 ]\n[ 记忆留存：确认 ]\n[ 重置至灾难触发前：1988年11月2日 ]";
+            dialogueText.innerText = "[ 记忆回滚：1988年11月2日 ]";
             dialogueText.style.opacity = 1;
-            await sleep(3500);
+            await sleep(3000);
             dialogueText.style.opacity = 0;
             await sleep(1500);
 
@@ -272,41 +223,23 @@
         function resetGameEnvironment() {
             rewindOverlay.style.opacity = 0;
             setTimeout(() => { rewindOverlay.style.display = 'none'; }, 1500);
-            
             output.innerHTML = '';
             
-            state = {
-                isTyping: false,
-                phase: 'rewinded',
-                fbiProgress: 0,
-                cpuLoad: 0.05,
-                isLogCleared: false,
-                mailInterval: null,
-                systemTickInterval: null
-            };
-            
+            state = { isTyping: false, phase: 'rewinded', fbiProgress: 0, cpuLoad: 0.05 };
             loadDisplay.innerText = `CPU负载: 0.05`;
             fbiDisplay.innerText = `FBI追踪进度: 0%`;
             document.getElementById('input-line').style.display = 'flex';
 
-            typeText("你大汗淋漓地坐在显示器前。手指正悬停在回车键上方。\n屏幕上光标闪烁，如同命运的倒计时。\n刚刚的一切仿佛是一场过于真实的噩梦。\n你知道如果输入 ./worm 会发生什么。\n\n[系统提示]: 悬崖勒马。输入 'rm worm' 将这头怪兽彻底销毁。", "sys-msg");
+            typeText("时空重置。\n你大汗淋漓。光标闪烁如同倒计时。\n输入 'cat prop.c' 看看你到底写了什么魔鬼代码，然后输入 'rm worm' 结束这一切。", "sys-msg");
         }
 
         function deleteWorm() {
             state.isTyping = true;
             document.getElementById('input-line').style.display = 'none';
-            
-            typeText("> rm worm", "user-cmd", async () => {
-                await sleep(800);
-                typeText("正在移除二进制文件...", "sys-msg", async () => {
-                    await sleep(1000);
-                    typeText("正在覆写扇区以防恢复...", "sys-msg", async () => {
-                        await sleep(1500);
-                        typeText("\n[ 目标已销毁 ]\n互联网保住了它的宁静。\n六千台服务器的维护人员今晚可以安然入睡。\n而你，罗伯特，永远埋藏了这个秘密。", "success-msg", () => {
-                            state.phase = 'victory';
-                            state.isTyping = false;
-                        });
-                    });
+            typeText("正在执行数据覆写...", "sys-msg", async () => {
+                await sleep(1500);
+                typeText("\n[ 蠕虫已彻底删除 ]\n历史的轨迹被改写。互联网的脆弱节点今夜得以幸存。\n罗伯特，关机睡觉吧。", "success-msg", () => {
+                    state.phase = 'victory';
                 });
             });
         }
@@ -322,7 +255,7 @@
                     line.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
                     i++;
                     terminal.scrollTop = terminal.scrollHeight;
-                    setTimeout(type, 20);
+                    setTimeout(type, 15);
                 } else {
                     state.isTyping = false;
                     if (callback) callback();
@@ -341,14 +274,13 @@
 
         function gameOver(reason) {
             document.body.innerHTML = `<div style="text-align:center; margin-top:20vh; color:red;">
-                <h1>GAME OVER</h1>
-                <p>${reason}</p>
-                <button onclick="location.reload()" style="background:none; color:white; border:1px solid white; padding:10px; font-family:'Courier New'; cursor:pointer;">重新连线</button>
+                <h1>GAME OVER</h1><p>${reason}</p>
+                <button onclick="location.reload()" style="background:none; color:white; border:1px solid white; padding:10px; cursor:pointer;">重试</button>
             </div>`;
         }
 
         window.onload = () => {
-            typeText("System login: root\n终端连接已建立。请执行 './worm' 开始测试。", "sys-msg");
+            typeText("终端连接已建立。\n请输入 'make' 开始编译蠕虫核心代码。", "sys-msg");
         }
     </script>
 </body>
