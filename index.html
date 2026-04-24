@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project: MORRIS // 1988</title>
     <style>
-        /* 复古CRT显示器风格 */
         body {
             background-color: #0a0a0a;
             color: #4af626;
@@ -23,171 +22,222 @@
             margin-bottom: 20px;
         }
 
-        /* 终端输出框 */
         #terminal {
-            height: 60vh;
+            height: 70vh;
             border: 1px solid #4af626;
             padding: 20px;
             overflow-y: auto;
             background-color: #000;
             box-shadow: inset 0 0 15px rgba(74, 246, 38, 0.2);
-            margin-bottom: 20px;
             line-height: 1.6;
+            display: flex;
+            flex-direction: column;
         }
 
-        .log-line {
-            margin: 5px 0;
+        #output {
+            margin-bottom: 10px;
         }
 
+        .log-line { margin: 5px 0; word-wrap: break-word; }
         .sys-msg { color: #aaaaaa; text-shadow: none; }
         .alert-msg { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
+        .user-cmd { color: #fff; text-shadow: none; font-weight: bold; }
 
-        /* 闪烁的光标 */
-        .cursor {
-            display: inline-block;
-            width: 10px;
-            height: 1.2em;
-            background-color: #4af626;
-            vertical-align: text-bottom;
-            animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        /* 控制面板按钮 */
-        #controls {
+        /* 真实的输入行 */
+        #input-line {
             display: flex;
-            gap: 15px;
+            align-items: center;
         }
 
-        button {
-            background-color: transparent;
+        #prompt { margin-right: 10px; }
+
+        #cmd-input {
+            background: transparent;
+            border: none;
             color: #4af626;
-            border: 1px solid #4af626;
-            padding: 10px 20px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
+            outline: none;
+            flex-grow: 1;
+            text-shadow: 0 0 5px #4af626;
         }
 
-        button:hover:not(:disabled) {
-            background-color: #4af626;
-            color: #000;
-            text-shadow: none;
-        }
-
-        button:disabled {
-            border-color: #1a4a15;
-            color: #1a4a15;
-            cursor: not-allowed;
-            text-shadow: none;
-        }
+        /* 隐藏原生的输入框光标，如果想要更复古可以后续用CSS模拟，这里先保持原生以保证输入流畅 */
     </style>
 </head>
 <body>
 
     <h1>[ 终端连接建立: 康奈尔大学 // ARPANET 节点 ]</h1>
     
-    <div id="terminal">
+    <div id="terminal" onclick="document.getElementById('cmd-input').focus()">
         <div id="output"></div>
-        <span class="cursor" id="cursor"></span>
-    </div>
-
-    <div id="controls">
-        <button id="btn-compile" onclick="compileCode()">编译核心代码</button>
-        <button id="btn-scan" onclick="scanNetwork()" disabled>扫描局域网漏洞</button>
-        <button id="btn-release" onclick="releaseWorm()" disabled>注入 ARPANET</button>
+        <div id="input-line">
+            <span id="prompt">root@cornell:~#</span>
+            <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" autofocus>
+        </div>
     </div>
 
     <script>
         const output = document.getElementById('output');
         const terminal = document.getElementById('terminal');
-        const btnCompile = document.getElementById('btn-compile');
-        const btnScan = document.getElementById('btn-scan');
-        const btnRelease = document.getElementById('btn-release');
+        const cmdInput = document.getElementById('cmd-input');
+        const inputLine = document.getElementById('input-line');
 
-        let isTyping = false;
+        // 游戏状态变量
+        let gameState = {
+            isTyping: false,
+            isCompiled: false,
+            isScanned: false,
+            isReleased: false
+        };
 
-        // 打字机效果函数
+        // 监听回车键输入
+        cmdInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !gameState.isTyping) {
+                const command = this.value.trim().toLowerCase();
+                if (command) {
+                    processCommand(command);
+                }
+                this.value = ''; // 清空输入框
+            }
+        });
+
+        // 处理玩家输入的命令
+        function processCommand(cmd) {
+            // 在屏幕上回显玩家的输入
+            echoText(`root@cornell:~# ${cmd}`, "user-cmd");
+
+            // 简单的命令解析
+            switch(cmd) {
+                case 'help':
+                    typeText("可用指令:\n- help : 显示此帮助信息\n- ls : 列出当前目录文件\n- make : 编译当前目录的C文件\n- scan : 扫描局域网节点\n- ./worm : 运行编译好的程序\n- clear : 清理屏幕", "sys-msg");
+                    break;
+                case 'ls':
+                    typeText("main.c  prop.c  readme.txt", "");
+                    break;
+                case 'make':
+                case 'gcc':
+                    if (gameState.isCompiled) {
+                        typeText("make: 'worm' is up to date.", "sys-msg");
+                    } else {
+                        compileCode();
+                    }
+                    break;
+                case 'scan':
+                    if (!gameState.isCompiled) {
+                        typeText("系统提示：必须先编译出可执行文件，才能挂载扫描模块。", "alert-msg");
+                    } else {
+                        scanNetwork();
+                    }
+                    break;
+                case './worm':
+                case 'run':
+                    if (!gameState.isCompiled) {
+                        typeText("bash: ./worm: No such file or directory", "alert-msg");
+                    } else if (!gameState.isScanned) {
+                        typeText("错误：缺少目标网络拓扑数据，请先执行 scan。", "alert-msg");
+                    } else if (gameState.isReleased) {
+                        typeText("进程已经在后台运行。当前PID: 1337", "sys-msg");
+                    } else {
+                        releaseWorm();
+                    }
+                    break;
+                case 'clear':
+                    output.innerHTML = '';
+                    break;
+                default:
+                    typeText(`bash: ${cmd}: command not found. (输入 'help' 查看指令)`, "alert-msg");
+            }
+        }
+
+        // 直接输出文字（无打字动画，用于玩家输入回显）
+        function echoText(text, className = '') {
+            const line = document.createElement('div');
+            line.className = `log-line ${className}`;
+            line.innerText = text;
+            output.appendChild(line);
+            scrollToBottom();
+        }
+
+        // 核心：打字机效果函数（阻塞玩家输入）
         function typeText(text, className = '', callback = null) {
-            if (isTyping) return;
-            isTyping = true;
+            if (gameState.isTyping) return;
+            
+            gameState.isTyping = true;
+            inputLine.style.display = 'none'; // 隐藏输入行，防止打字时玩家乱敲
             
             const line = document.createElement('div');
             line.className = `log-line ${className}`;
             output.appendChild(line);
             
             let i = 0;
-            const speed = Math.random() * 30 + 20; // 随机打字速度增加真实感
+            // 格式化换行符
+            const formattedText = text.replace(/\n/g, '<br>');
 
             function type() {
                 if (i < text.length) {
-                    line.innerHTML += text.charAt(i);
+                    if (text.charAt(i) === '\n') {
+                        line.innerHTML += '<br>';
+                    } else {
+                        line.innerHTML += text.charAt(i);
+                    }
                     i++;
-                    terminal.scrollTop = terminal.scrollHeight; // 自动滚动到底部
+                    scrollToBottom();
+                    
+                    // 根据标点符号调整打字停顿
+                    let speed = Math.random() * 30 + 10;
+                    if (['.', '!', '?'].includes(text.charAt(i-1))) speed += 200;
+                    
                     setTimeout(type, speed);
                 } else {
-                    isTyping = false;
+                    gameState.isTyping = false;
+                    inputLine.style.display = 'flex'; // 恢复输入行
+                    cmdInput.focus();
+                    scrollToBottom();
                     if (callback) callback();
                 }
             }
             type();
         }
 
-        // 剧情步骤 1：编译
+        function scrollToBottom() {
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // 剧情模块
         function compileCode() {
-            if (isTyping) return;
-            btnCompile.disabled = true;
-            
-            typeText("> gcc -o worm main.c prop.c", "sys-msg", () => {
+            typeText("编译中... gcc -o worm main.c prop.c", "sys-msg", () => {
                 setTimeout(() => {
-                    typeText("编译中... 未发现语法错误。", "", () => {
-                        typeText("1988年11月2日。你坐在昏暗的机房里。这段不到99行的C代码，即将用来丈量整个互联网的大小。", "", () => {
-                            btnScan.disabled = false;
-                        });
+                    typeText("编译完成。未发现语法错误。\n1988年11月2日。你坐在昏暗的机房里。这段不到99行的C代码，即将用来丈量整个互联网的大小。", "", () => {
+                        gameState.isCompiled = true;
+                    });
+                }, 500);
+            });
+        }
+
+        function scanNetwork() {
+            typeText("正在探测周边节点...", "sys-msg", () => {
+                setTimeout(() => {
+                    typeText("发现目标系统: SunOS 3 & VAX 4 BSD.\n漏洞定位成功: sendmail debug 模式开启 | fingerd 存在缓冲区溢出风险。", "", () => {
+                        gameState.isScanned = true;
                     });
                 }, 800);
             });
         }
 
-        // 剧情步骤 2：扫描
-        function scanNetwork() {
-            if (isTyping) return;
-            btnScan.disabled = true;
-
-            typeText("> 正在探测周边节点...", "sys-msg", () => {
-                setTimeout(() => {
-                    typeText("发现目标系统: SunOS 3 & VAX 4 BSD.", "", () => {
-                        typeText("漏洞定位成功: sendmail debug 模式开启 | fingerd 存在缓冲区溢出风险。", "", () => {
-                            btnRelease.disabled = false;
-                        });
-                    });
-                }, 1000);
-            });
-        }
-
-        // 剧情步骤 3：释放
         function releaseWorm() {
-            if (isTyping) return;
-            btnRelease.disabled = true;
-
-            typeText("> ./worm -p 8080 -d", "sys-msg", () => {
+            typeText("执行 ./worm -p 8080 -d ...", "sys-msg", () => {
                 setTimeout(() => {
                     typeText("警告：未设置严格的自我复制上限阀值。这可能导致宿主机器负载过高。", "alert-msg", () => {
                         setTimeout(() => {
-                            typeText("忽略警告。正在将 payload 注入网络底层...", "", () => {
-                                typeText("程序已脱离终端控制。它开始在暗网中自我繁衍。", "", () => {
-                                    setTimeout(() => {
-                                        typeText("【系统提示】：你打开了潘多拉的魔盒。等待网络异变的发生吧...", "sys-msg");
-                                    }, 1000);
-                                });
+                            typeText("忽略警告。正在将 payload 注入网络底层...\n程序已脱离终端控制。它开始在暗网中自我繁衍。", "", () => {
+                                setTimeout(() => {
+                                    typeText("【系统提示】：你打开了潘多拉的魔盒。等待网络异变的发生吧...", "sys-msg", () => {
+                                        gameState.isReleased = true;
+                                    });
+                                }, 1000);
                             });
-                        }, 1500);
+                        }, 1200);
                     });
                 }, 800);
             });
@@ -195,8 +245,9 @@
 
         // 初始欢迎语
         window.onload = () => {
+            cmdInput.focus();
             setTimeout(() => {
-                typeText("System login: root");
+                typeText("System login: root\nType 'help' to see available commands.", "sys-msg");
             }, 500);
         };
     </script>
