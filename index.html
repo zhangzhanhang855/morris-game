@@ -3,53 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project: MORRIS // 1988 - EXTENDED</title>
+    <title>Project: MORRIS // 1988 - TOTAL IMMERSION</title>
     <style>
-        body { background-color: #0a0a0a; color: #4af626; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; overflow: hidden; text-shadow: 0 0 5px #4af626; transition: background-color 1s; }
-        #status-bar { display: flex; justify-content: space-between; background-color: #1a1a1a; padding: 5px 15px; font-size: 0.9rem; border: 1px solid #4af626; margin-bottom: 10px; }
-        #terminal { height: 75vh; border: 1px solid #4af626; padding: 20px; overflow-y: auto; background-color: #000; position: relative; }
-        .log-line { margin: 3px 0; line-height: 1.4; word-wrap: break-word; }
-        .sys-msg { color: #aaaaaa; text-shadow: none; }
-        .alert-msg { color: #ff3333; font-weight: bold; text-shadow: 0 0 5px #ff3333; }
-        .user-cmd { color: #fff; text-shadow: none; }
-        .mail-flood { color: #0088ff; opacity: 0.7; font-size: 0.8rem; }
-        .critical { color: #ff0000; font-weight: bold; }
-        .success-msg { color: #00ff00; font-weight: bold; text-shadow: 0 0 8px #00ff00; }
-        #input-line { display: flex; margin-top: 10px; }
-        #cmd-input { background: transparent; border: none; color: #4af626; font-family: inherit; font-size: 1rem; outline: none; flex-grow: 1; text-shadow: 0 0 5px #4af626; }
-        .shake { animation: shake 0.2s infinite; }
-        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, -1px); } }
-        #rewind-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
-        #dialogue-text { color: #fff; font-size: 1.5rem; font-family: "SimSun", serif; text-shadow: none; opacity: 0; transition: opacity 1s ease-in-out; text-align: center; white-space: pre-line; letter-spacing: 2px; }
+        /* --- 核心震撼背景：动态网络虚空 --- */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #010501; /* 极深的绿黑，代替纯黑 */
+            font-family: 'Courier New', Courier, monospace;
+            /* 基础色调：青绿 */
+            color: #4af626;
+            text-shadow: 0 0 5px rgba(74, 246, 38, 0.8);
+            transition: color 0.5s, text-shadow 0.5s;
+        }
+
+        /* 用于绘制动态网格的 Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3; /* 保持背景微妙 */
+            transition: opacity 1s;
+        }
+
+        /* --- 主显示容器：模拟 CRT 屏幕弯曲感 --- */
+        #main-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-sizing: border-box;
+            /* 模拟屏幕边缘暗角 */
+            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,10,0,0.6) 100%);
+            z-index: 10;
+        }
+
+        /* --- CRT 全屏滤镜叠加 --- */
+        #main-wrapper::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            /* 扫描线效果 */
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        /* 屏幕微弱闪烁感 */
+        @keyframes flicker {
+            0% { opacity: 0.982; }
+            5% { opacity: 0.963; }
+            10% { opacity: 0.922; }
+            15% { opacity: 0.985; }
+            20% { opacity: 0.941; }
+            100% { opacity: 0.989; }
+        }
+        #terminal-content {
+            animation: flicker 0.15s infinite;
+        }
+
+        /* --- 游戏状态样式：橙色失控 --- */
+        body.state-crisis {
+            color: #ffaa00;
+            text-shadow: 0 0 8px rgba(255, 170, 0, 0.9);
+        }
+        
+        /* --- 游戏状态样式：红色灾难 --- */
+        body.state-collapsed {
+            color: #ff3333;
+            text-shadow: 0 0 10px rgba(255, 51, 51, 1);
+        }
+
+        /* --- 原有组件的震撼增强 --- */
+        #status-bar {
+            display: flex; justify-content: space-between;
+            background-color: rgba(26, 26, 26, 0.7); /* 半透明 */
+            padding: 10px 20px; font-size: 0.9rem;
+            border: 1px solid currentColor; /* 颜色随状态变 */
+            margin-bottom: 20px;
+            backdrop-filter: blur(2px); /* 现代毛玻璃效果 */
+        }
+
+        #terminal {
+            flex-grow: 1;
+            border: 1px solid currentColor;
+            padding: 25px;
+            overflow-y: auto;
+            background-color: rgba(0, 5, 0, 0.8);
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(currentColor, 0.2);
+        }
+
+        /* 强制覆盖滚动条样式，使其不破坏氛围 */
+        #terminal::-webkit-scrollbar { width: 8px; }
+        #terminal::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        #terminal::-webkit-scrollbar-thumb { background: currentColor; opacity: 0.5; }
+
+        .log-line { margin: 5px 0; line-height: 1.5; font-size: 1.1rem; }
+        .sys-msg { color: rgba(currentColor, 0.7); text-shadow: none; }
+        .alert-msg { font-weight: bold; animation: pulse 1s infinite; }
+        .critical { font-weight: bold; animation: glitch-text 0.3s infinite; }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes glitch-text {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 1px); color: #fff; }
+            40% { transform: translate(2px, -1px); }
+            60% { transform: translate(-1px, -2px); color: #f0f; }
+            80% { transform: translate(1px, 2px); }
+            100% { transform: translate(0); }
+        }
+
+        #input-line { display: flex; margin-top: 15px; font-size: 1.1rem;}
+        #cmd-input {
+            background: transparent; border: none; color: currentColor;
+            font-family: inherit; font-size: inherit; outline: none; flex-grow: 1;
+            text-shadow: inherit;
+        }
+
+        /* 灾难时的剧烈震动 */
+        body.state-collapsed #main-wrapper {
+            animation: quake 0.1s infinite;
+        }
+        @keyframes quake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            25% { transform: translate(-2px, -1px) rotate(0.1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-0.1deg); }
+            75% { transform: translate(2px, 1px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(0.1deg); }
+        }
+
+        /* --- 震撼的回溯转场：时空塌缩 --- */
+        #rewind-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #000; z-index: 9999; display: none;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 1s ease-in-out;
+        }
+        
+        /* 塌缩动画的 Canvas */
+        #rewind-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        #dialogue-text {
+            position: relative; z-index: 10001;
+            color: #fff; font-size: 1.8rem;
+            font-family: "SimSun", "Songti SC", serif;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+            opacity: 0; transition: opacity 0.8s ease-in-out;
+            text-align: center; white-space: pre-line; letter-spacing: 3px;
+            padding: 0 50px;
+        }
     </style>
-    <script>
-        window.onerror = function(msg, url, line) {
-            document.body.innerHTML = `<div style="color:red; padding:30px; font-family:sans-serif; background:#000; height:100vh;">
-                <h2>⚠️ 系统崩溃</h2><p>${msg} (Line ${line})</p>
-                <p>请确保文件保存为 UTF-8 编码格式。</p></div>`;
-            return false;
-        };
-    </script>
 </head>
 <body onclick="document.getElementById('cmd-input').focus()">
 
-    <div id="rewind-overlay"><div id="dialogue-text"></div></div>
+    <canvas id="bg-canvas"></canvas>
 
-    <div id="status-bar">
-        <span>节点: Cornell-U-VAX</span>
-        <span id="load-display">CPU负载: 0.05</span>
-        <span id="fbi-trace" style="color: #ffaa00;">FBI追踪进度: 0%</span>
+    <div id="rewind-overlay">
+        <canvas id="rewind-canvas"></canvas>
+        <div id="dialogue-text"></div>
     </div>
-    
-    <div id="terminal">
-        <div id="output"></div>
-        <div id="input-line">
-            <span id="prompt">root@cornell:~#</span>
-            <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" autofocus>
+
+    <div id="main-wrapper">
+        <div id="terminal-content" style="display: flex; flex-direction: column; height: 100%;">
+            <div id="status-bar">
+                <span>[ 节点:康奈尔_VAX_1 ]</span>
+                <span id="load-display">网络负载: 极低</span>
+                <span id="fbi-trace" style="display:none;">[ 被动溯源中 ]</span>
+            </div>
+            
+            <div id="terminal">
+                <div id="output"></div>
+                <div id="input-line">
+                    <span id="prompt">morris@vax:~#</span>
+                    <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" autofocus>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // --- 全局错误捕获 ---
+        window.onerror = function(msg, url, line) {
+            document.body.innerHTML = `<div style="color:#ff3333; padding:50px; font-family:sans-serif; background:#000; height:100vh;">
+                <h1>⚠️ 致命系统错误 (内核崩溃)</h1><p>${msg} (Line ${line})</p>
+                <p>原因排查: 确保文件使用 UTF-8 编码保存。</p></div>`;
+            return false;
+        };
+
+        // --- 初始化环境 ---
         const output = document.getElementById('output');
         const cmdInput = document.getElementById('cmd-input');
         const loadDisplay = document.getElementById('load-display');
@@ -59,191 +212,300 @@
         const dialogueText = document.getElementById('dialogue-text');
 
         let state = {
-            isTyping: false, phase: 'prep_make', fbiProgress: 0, cpuLoad: 0.05,
-            mailInterval: null, systemTickInterval: null, processKilled: false
+            isTyping: false, phase: 'prep_make',
+            loadLevel: 0, // 0:正常, 1:高, 2:失控
+            struggleStep: 0,
+            intervals: {}
         };
 
         const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-        function startSystemTick() {
-            state.systemTickInterval = setInterval(() => {
-                if (['struggle', 'hiding', 'repairing', 'collapsed'].includes(state.phase)) {
-                    state.cpuLoad += 0.15;
-                    if (state.cpuLoad > 15) terminal.classList.add('shake');
-                    if (state.cpuLoad > 40 && state.phase !== 'collapsed') {
-                        state.phase = 'collapsed';
-                        triggerMailFlood();
-                    }
-                    loadDisplay.innerText = `CPU负载: ${state.cpuLoad.toFixed(2)}`;
-                }
+        // --- 震撼背景绘制逻辑 (动态网格) ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let lines = [];
+        let baseSpeed = 0.5;
 
-                if ((state.phase === 'struggle' || state.phase === 'hiding')) {
-                    state.fbiProgress += 1;
-                    fbiDisplay.innerText = `FBI追踪进度: ${state.fbiProgress}%`;
-                    if (state.fbiProgress >= 100) gameOver("FBI 锁定了你的物理位置。你被捕了。");
-                }
-            }, 1000);
+        function initBg() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            lines = [];
+            for (let i = 0; i < 30; i++) {
+                lines.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    speed: (Math.random() + 0.5) * baseSpeed,
+                    len: Math.random() * 200 + 100,
+                    vertical: Math.random() > 0.5
+                });
+            }
         }
-        startSystemTick();
 
-        cmdInput.addEventListener('keydown', function(e) {
+        function drawBg() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            // 颜色随页面文字颜色变
+            const color = window.getComputedStyle(document.body).color;
+            bgCtx.strokeStyle = color;
+            bgCtx.lineWidth = 1;
+            
+            for (let line of lines) {
+                bgCtx.beginPath();
+                bgCtx.moveTo(line.x, line.y);
+                if (line.vertical) {
+                    bgCtx.lineTo(line.x, line.y + line.len);
+                    line.y += line.speed;
+                    if (line.y > bgCanvas.height) line.y = -line.len;
+                } else {
+                    bgCtx.lineTo(line.x + line.len, line.y);
+                    line.x += line.speed;
+                    if (line.x > bgCanvas.width) line.x = -line.len;
+                }
+                bgCtx.stroke();
+            }
+            requestAnimationFrame(drawBg);
+        }
+        
+        window.addEventListener('resize', initBg);
+        initBg();
+        drawBg();
+
+        // --- 系统状态循环 (负载与追踪) ---
+        state.intervals.system = setInterval(() => {
+            if (['struggle', 'hiding', 'collapsed'].includes(state.phase)) {
+                state.loadLevel += 0.05;
+                if (state.loadLevel > 1 && state.phase !== 'collapsed') {
+                    state.phase = 'collapsed';
+                    document.body.classList.add('state-collapsed');
+                    triggerCatastrophe();
+                }
+                updateLoadDisplay();
+            }
+        }, 1500);
+
+        function updateLoadDisplay() {
+            if (state.loadLevel < 0.3) {
+                loadDisplay.innerText = "网络负载: 极低";
+            } else if (state.loadLevel < 0.7) {
+                loadDisplay.innerText = "网络负载: 高 (预警)";
+                loadDisplay.style.color = "#ffaa00";
+                document.body.classList.add('state-crisis');
+                baseSpeed = 2; // 背景加速
+            } else {
+                loadDisplay.innerText = "网络负载: 临界故障！！！";
+                loadDisplay.style.color = "#ff3333";
+                fbiDisplay.style.display = "inline";
+                baseSpeed = 5; // 背景狂暴
+            }
+        }
+
+        // --- 命令处理核心 ---
+        cmdInput.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !state.isTyping) {
-                const cmd = this.value.trim().toLowerCase();
-                this.value = '';
+                let cmd = cmdInput.value.trim(); // 保持大小写
+                cmdInput.value = '';
                 handleCommand(cmd);
             }
         });
 
         function handleCommand(cmd) {
-            if (state.phase === 'collapsed' && Math.random() > 0.4) {
-                cmd = cmd.replace(/./g, (c, i) => Math.random() > 0.6 ? ['#','*','!','&'][Math.floor(Math.random()*4)] : c);
-            }
-            
-            echoText(`root@cornell:~# ${cmd}`, "user-cmd");
+            echoText(`morris@vax:~# ${cmd}`, "user-cmd");
+            let cmdLower = cmd.toLowerCase();
 
-            // 阶段 1: 准备 (编译 -> 扫描 -> 释放)
-            if (state.phase === 'prep_make') {
-                if (cmd === 'help') typeText("指令: make (编译), scan (扫描), ./worm (执行)", "sys-msg");
-                else if (cmd === 'make') {
-                    typeText("gcc -o worm main.c prop.c...\n编译完成。无语法错误。", "sys-msg", () => state.phase = 'prep_scan');
-                } else typeText("请先输入 'make' 编译源码。", "alert-msg");
+            // 崩溃时的干扰逻辑
+            if (state.phase === 'collapsed' && Math.random() > 0.3) {
+                typeText("> 致命错误: I/O 通道已死锁。\n> 无法执行指令。", "critical");
+                return;
             }
-            else if (state.phase === 'prep_scan') {
-                if (cmd === 'scan') {
-                    typeText("扫描周边网络...\n发现目标: SunOS, VAX BSD.\n存在 sendmail 与 fingerd 漏洞。", "sys-msg", () => state.phase = 'prep_run');
-                } else typeText("缺少目标节点数据。请先执行 'scan'。", "alert-msg");
-            }
-            else if (state.phase === 'prep_run') {
-                if (cmd === './worm') releaseWorm();
-                else typeText("一切就绪。执行 './worm' 开始注入。", "sys-msg");
-            }
-            // 阶段 2: 爆发与挣扎 (查看进程 -> 尝试杀进程 -> 删日志躲避)
-            else if (state.phase === 'struggle') {
-                if (cmd === 'ps' || cmd === 'top') {
-                    typeText("PID   USER   %CPU  COMMAND\n1024  root   99.9  worm\n1025  root   98.2  worm\n1026  root   99.1  worm\n[系统提示] 蠕虫正在无限繁殖！尝试输入 'killall worm' 终止它！", "sys-msg");
-                } 
-                else if (cmd === 'killall worm' || cmd.startsWith('kill')) {
-                    typeText("发送 SIGTERM 信号...\n访问拒绝 / 进程生成速度超过销毁速度！\n[系统告警] FBI已介入溯源！快输入 'rm -rf /var/log/lastlog' 清除痕迹！", "alert-msg", () => state.phase = 'hiding');
-                }
-                else typeText("系统负载飙升！输入 'ps' 查看异常进程！", "alert-msg");
-            }
-            else if (state.phase === 'hiding') {
-                if (cmd.includes('rm ') && cmd.includes('log')) {
-                    typeText("本地日志已粉碎。FBI 追踪信号丢失。\n但外部网络依然在崩塌。输入 'ifconfig down' 尝试切断物理网络，或 'mail' 发送警告邮件。", "sys-msg", () => state.phase = 'repairing');
-                } else typeText("FBI 即将锁定 IP！快删除日志: 'rm -rf /var/log/lastlog'", "critical");
-            }
-            // 阶段 3: 尝试补救 (断网/发邮件 -> 彻底崩溃)
-            else if (state.phase === 'repairing' || state.phase === 'collapsed') {
-                if (cmd.includes('ifconfig')) {
-                    typeText("ifconfig: ioctl (SIOCGIFFLAGS): 资源暂时不可用。\n网卡驱动已死锁。", "critical");
-                }
-                else if (cmd === 'mail' || cmd === 'patch') {
-                    typeText("正在连接 SMTP 服务器...", "sys-msg", async () => {
-                        await sleep(1000);
-                        typeText("FATAL ERROR: 邮件队列已满。网线被海量复制包堵死。\n你的补救信件永远无法寄出。", "critical", () => {
-                            triggerRewindSequence();
+
+            // --- 阶段分流处理 ---
+            switch (state.phase) {
+                case 'prep_make':
+                    if (cmdLower === 'make') {
+                        typeText("gcc -o worm main.c prop.c ...\n链接网络库...\n编译成功。校验和: 0xAFFED4", "sys-msg", () => state.phase = 'prep_scan');
+                    } else typeText("输入 'make' 初始化 Payload。", "sys-msg");
+                    break;
+                case 'prep_scan':
+                    if (cmdLower === 'scan') {
+                        typeText("探测 128.2.*.* (CMU), 10.*.*.* (ARPANET 骨干)...\n发现漏洞节点: sendmail(DEBUG模式), fingerd(缓冲区溢出).\n就绪。", "sys-msg", () => state.phase = 'prep_run');
+                    } else typeText("等待指令: 'scan' 以锁定目标网段。", "sys-msg");
+                    break;
+                case 'prep_run':
+                    if (cmdLower === './worm') releaseWorm();
+                    else typeText("Payload 已就绪。执行 './worm' 触发网络泛洪测试。", "sys-msg");
+                    break;
+                case 'struggle':
+                    if (cmdLower === 'ps') {
+                        typeText("PID  COMMAND    %CPU\n101  mail       1.2\n102  csh        0.5\n998  worm       98.1\n999  worm       97.5\n[警告] 进程数正以几何级数上升！", "alert-msg");
+                        state.struggleStep = 1;
+                    } else if (state.struggleStep === 1 && cmdLower.startsWith('kill')) {
+                        typeText("发送信号...\nkill: 998: 访问拒绝。\nkill: 999: 访问拒绝。\n新的进程正在生成...\n[致命] 无法终止宿主进程！", "critical", () => {
+                            state.phase = 'hiding';
+                            setTimeout(()=> {
+                                typeText("\n[局域网告警] 收到外部路由器溯源请求。\nFBI 正在尝试定位发信源！\n快清理日志: 'rm /var/log/lastlog'", "critical");
+                            }, 1000);
                         });
-                    });
-                }
-            }
-            // 阶段 4: 回溯与救赎
-            else if (state.phase === 'rewinded') {
-                if (cmd === 'cat prop.c') {
-                    typeText("... \nif (magic_number == 1) { re_infect(); } // 致命的1/7强制感染逻辑\n...\n[提示] 代码逻辑无可挽回。输入 'rm worm' 毁掉它。", "sys-msg");
-                } else if (cmd === 'rm worm') {
-                    deleteWorm();
-                } else typeText("输入 'cat prop.c' 查看罪魁祸首，或直接输入 'rm worm' 销毁它。", "sys-msg");
+                    } else typeText("系统无响应！输入 'ps' 检查异变！", "alert-msg");
+                    break;
+                case 'hiding':
+                    if (cmdLower.includes('rm') && cmdLower.includes('log')) {
+                        typeText("rm: /var/log/lastlog: 成功粉碎。\n本地安全日志已移除。\n但在 CMU 和 Berkeley 的副本仍在崩塌。\n你必须尝试最后的补救，输入 'patch' 尝试向网络分发补丁。", "sys-msg", () => state.phase = 'repairing');
+                    } else typeText("被动溯源进行中！！！清理日志: 'rm /var/log/lastlog'", "critical");
+                    break;
+                case 'repairing':
+                case 'collapsed':
+                    if (cmdLower === 'patch') {
+                        typeText("正在连接 SMTP 邮件服务器...", "sys-msg", async () => {
+                            await sleep(1500);
+                            typeText("超时。\n超时。\n超时。\n[错误] 网络带宽已被海量垃圾数据堵死。\n补丁分发邮件无法寄出。", "critical", triggerRewindSequence);
+                        });
+                    } else typeText("输入 'patch' 尝试进行最后的、无望的拯救。", "sys-msg");
+                    break;
+                case 'rewinded':
+                    if (cmdLower === 'rm worm') {
+                        deleteWorm();
+                    } else typeText("[输入 rm worm 以终结此代码的回响。]", "sys-msg");
+                    break;
             }
         }
 
+        // --- 核心剧情推进功能 ---
         function releaseWorm() {
             state.isTyping = true;
-            typeText("Payload 注入中...", "sys-msg", async () => {
-                await sleep(1000);
-                output.innerHTML = '';
-                document.body.style.backgroundColor = "#200";
-                typeText("!!! 警报：网络级联失效 !!!\n程序未检测到退出阈值，开始在局域网内指数级增殖！\n输入 'ps' 检查系统进程！", "alert-msg", () => {
+            typeText("正在注入 ARPANET 核心路由器...", "sys-msg", async () => {
+                await sleep(1500);
+                output.innerHTML = ''; // 震撼清屏
+                terminal.style.borderColor = "#ffaa00"; // 边框变色
+                typeText("\n=========================================\n[ !!! CRITICAL ALERT !!! ]\n代码逻辑发生死循环：WORM 正在自我泛洪！\n它正以超乎想象的速度在全美节点自我复制！\n=========================================", "alert-msg", () => {
                     state.phase = 'struggle';
                     state.isTyping = false;
+                    state.loadLevel = 0.5; // 直接进入高负载
                 });
             });
         }
 
-        function triggerMailFlood() {
-            if (state.mailInterval) return;
-            state.mailInterval = setInterval(() => {
-                const logs = [">> Incoming: QUEUE FULL", ">> ERROR: buffer overflow", ">> MILNET: Connection refused", ">> kernel: Out of memory"];
+        function triggerCatastrophe() {
+            if (state.intervals.mail) return;
+            // 震撼效果：背景降至最暗，突出前景抖动
+            document.getElementById('bg-canvas').style.opacity = '0.1';
+            state.intervals.mail = setInterval(() => {
+                const msgs = [">> CMU VAX collapsed", ">> sendmail@Berkeley error", ">> MILNET isolated", ">> KERNEL PANIC", ">> MEMORY OVERFLOW"];
                 const line = document.createElement('div');
                 line.className = "log-line mail-flood";
-                line.innerText = logs[Math.floor(Math.random() * logs.length)];
+                line.innerText = msgs[Math.floor(Math.random() * msgs.length)];
                 output.appendChild(line);
                 terminal.scrollTop = terminal.scrollHeight;
-            }, 300);
+            }, 250);
         }
 
+        // --- 震撼的时空回溯 (塌缩效果与对话) ---
         async function triggerRewindSequence() {
             state.isTyping = true;
             document.getElementById('input-line').style.display = 'none';
-            clearInterval(state.mailInterval);
-            clearInterval(state.systemTickInterval);
+            // 清理所有进程
+            for (let i in state.intervals) clearInterval(state.intervals[i]);
             terminal.classList.remove('shake');
+            document.getElementById('bg-canvas').style.opacity = '0';
 
-            await sleep(1500);
+            await sleep(2000);
             rewindOverlay.style.display = 'flex';
             setTimeout(() => { rewindOverlay.style.opacity = 1; }, 50);
-            document.body.style.backgroundColor = "#0a0a0a"; 
 
+            // 启动时空塌缩 Canvas 动画 (简单效果：无数粒子向中心会聚)
+            const rwCanvas = document.getElementById('rewind-canvas');
+            rwCanvas.width = window.innerWidth;
+            rwCanvas.height = window.innerHeight;
+            const rwCtx = rwCanvas.getContext('2d');
+            let particles = [];
+            for(let i=0; i<300; i++) {
+                particles.push({
+                    x: Math.random()*rwCanvas.width,
+                    y: Math.random()*rwCanvas.height,
+                    vx: 0, vy: 0, r: Math.random()*2+1
+                });
+            }
+            const centerX = rwCanvas.width/2;
+            const centerY = rwCanvas.height/2;
+            
+            let rwAnimation = setInterval(()=> {
+                rwCtx.fillStyle = 'rgba(0,0,0,0.1)';
+                rwCtx.fillRect(0,0,rwCanvas.width,rwCanvas.height);
+                rwCtx.fillStyle = '#fff';
+                let nearCenter = 0;
+                for(let p of particles) {
+                    let dx = centerX - p.x;
+                    let dy = centerY - p.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist > 5) {
+                        p.vx += dx * 0.001; p.vy += dy * 0.001;
+                        p.x += p.vx; p.y += p.vy;
+                        p.vx *= 0.95; p.vy *= 0.95;
+                        rwCtx.fillRect(p.x, p.y, p.r, p.r);
+                    } else { nearCenter++; }
+                }
+                if(nearCenter > 250) clearInterval(rwAnimation);
+            }, 30);
+
+            await sleep(3000);
+
+            // 显示对话
             const lines = [
                 "“朋友，我闯大祸了。”", "“什么事？”", "“你看到网上的消息了吗？”",
                 "“看到了呀，这东西……我邮件发不出去。”", "“……哥，帮帮我。”",
                 "“这代码是我写的。”", "“我也不希望变成这样。”", "“你能补救吗？……喂？喂？”"
             ];
-
-            await sleep(2000);
             for (let line of lines) {
-                dialogueText.innerText = line;
-                dialogueText.style.opacity = 1;
-                await sleep(line.includes("……") ? 3000 : 2000); 
-                dialogueText.style.opacity = 0;
-                await sleep(800); 
+                dialogueText.innerText = line; dialogueText.style.opacity = 1;
+                await sleep(line.includes("……") ? 3000 : 2200); 
+                dialogueText.style.opacity = 0; await sleep(800); 
             }
 
+            // 记忆回滚提示
+            await sleep(1000);
+            rwCtx.clearRect(0,0,rwCanvas.width,rwCanvas.height); // 清理粒子
             dialogueText.style.fontFamily = "'Courier New', Courier, monospace";
-            dialogueText.style.color = "#4af626";
-            dialogueText.style.letterSpacing = "normal";
-            dialogueText.innerText = "[ 记忆回滚：1988年11月2日 ]";
+            dialogueText.style.color = "#4af626"; dialogueText.style.letterSpacing = "normal";
+            dialogueText.style.fontSize = "1.5rem";
+            dialogueText.innerText = "[ 时空结构发生重塑 ]\n[ 记忆留存：确认 ]\n[ 物理法则重置：康奈尔大学 18:00 ]";
             dialogueText.style.opacity = 1;
-            await sleep(3000);
-            dialogueText.style.opacity = 0;
-            await sleep(1500);
+            await sleep(4000);
+            dialogueText.style.opacity = 0; await sleep(2000);
 
             resetGameEnvironment();
         }
 
         function resetGameEnvironment() {
             rewindOverlay.style.opacity = 0;
-            setTimeout(() => { rewindOverlay.style.display = 'none'; }, 1500);
-            output.innerHTML = '';
+            setTimeout(() => { rewindOverlay.style.display = 'none'; }, 1000);
             
-            state = { isTyping: false, phase: 'rewinded', fbiProgress: 0, cpuLoad: 0.05 };
-            loadDisplay.innerText = `CPU负载: 0.05`;
-            fbiDisplay.innerText = `FBI追踪进度: 0%`;
+            output.innerHTML = '';
+            document.body.classList.remove('state-crisis', 'state-collapsed');
+            terminal.style.borderColor = "";
+            document.getElementById('bg-canvas').style.opacity = '0.3';
+            baseSpeed = 0.5;
+
+            state = { isTyping: false, phase: 'rewinded', loadLevel: 0, intervals: {} };
+            updateLoadDisplay();
             document.getElementById('input-line').style.display = 'flex';
 
-            typeText("时空重置。\n你大汗淋漓。光标闪烁如同倒计时。\n输入 'cat prop.c' 看看你到底写了什么魔鬼代码，然后输入 'rm worm' 结束这一切。", "sys-msg");
+            typeText("你坐在显示器前。光标闪烁。\n时间回到了按下回车键之前。\n噩梦的记忆如此清晰。\n它就在硬盘里，尚未执行。\n\n[提示]: 输入 'rm worm' 销毁代码，阻止一切发生。", "sys-msg");
         }
 
         function deleteWorm() {
             state.isTyping = true;
             document.getElementById('input-line').style.display = 'none';
-            typeText("正在执行数据覆写...", "sys-msg", async () => {
+            typeText("正在将二进制文件移出硬盘磁道...", "sys-msg", async () => {
                 await sleep(1500);
-                typeText("\n[ 蠕虫已彻底删除 ]\n历史的轨迹被改写。互联网的脆弱节点今夜得以幸存。\n罗伯特，关机睡觉吧。", "success-msg", () => {
-                    state.phase = 'victory';
+                typeText("正在使用随机零覆写扇区数据以防溯源...", "sys-msg", async () => {
+                    await sleep(1500);
+                    output.innerHTML = '';
+                    typeText("\n=========================================\n[ 目标已彻底销毁 ]\nARPANET 保住了它的宁静。\n六千台主机的维护人员将度过一个平凡的夜晚。\n没人知道，你刚刚拯救了世界。", "success-msg", () => {
+                        state.phase = 'victory';
+                    });
                 });
             });
         }
 
+        // --- 辅助打字与回显功能 ---
         function typeText(text, className = '', callback = null) {
             state.isTyping = true;
             const line = document.createElement('div');
@@ -255,7 +517,7 @@
                     line.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
                     i++;
                     terminal.scrollTop = terminal.scrollHeight;
-                    setTimeout(type, 15);
+                    setTimeout(type, 18); // 稍微加慢一点点打字，增加沉浸
                 } else {
                     state.isTyping = false;
                     if (callback) callback();
@@ -272,15 +534,9 @@
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        function gameOver(reason) {
-            document.body.innerHTML = `<div style="text-align:center; margin-top:20vh; color:red;">
-                <h1>GAME OVER</h1><p>${reason}</p>
-                <button onclick="location.reload()" style="background:none; color:white; border:1px solid white; padding:10px; cursor:pointer;">重试</button>
-            </div>`;
-        }
-
+        // --- 初始化欢迎语 ---
         window.onload = () => {
-            typeText("终端连接已建立。\n请输入 'make' 开始编译蠕虫核心代码。", "sys-msg");
+            typeText("Connected to Cornell.VAX.EDU\nSystem v3.11. Ready.\n[提示] 输入 'make' 初始化 Payload。", "sys-msg");
         }
     </script>
 </body>
