@@ -53,8 +53,9 @@
         #rewind-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: #000; z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 1.5s ease-in-out;
+            display: none; /* 修复：默认隐藏，避免阻断页面 */
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 1.5s ease-in-out;
         }
         
         #dialogue-text {
@@ -63,8 +64,292 @@
             text-align: center; white-space: pre-line; letter-spacing: 2px;
         }
     </style>
+    <script>
+        // 全局错误捕获：如果黑屏是因为代码报错，这里会直接把错误显示出来
+        window.onerror = function(msg, url, line) {
+            document.body.innerHTML = `<div style="color:red; padding:30px; font-family:sans-serif; background:#000; height:100vh;">
+                <h2>⚠️ 终端系统崩溃 (JavaScript 错误)</h2>
+                <p><strong>错误信息:</strong> ${msg}</p>
+                <p><strong>报错行号:</strong> 第 ${line} 行</p>
+                <hr>
+                <p><strong>排查建议：</strong><br>1. 检查代码是否复制完整。<br>2. 确保文件保存时选择了 <b>UTF-8</b> 编码。</p>
+            </div>`;
+            return false;
+        };
+    </script>
 </head>
 <body onclick="document.getElementById('cmd-input').focus()">
 
     <div id="rewind-overlay">
-        <div id="dialog
+        <div id="dialogue-text"></div>
+    </div>
+
+    <div id="status-bar">
+        <span>节点: Cornell-U-VAX</span>
+        <span id="load-display">CPU负载: 0.05</span>
+        <span id="fbi-trace" style="color: #ffaa00;">FBI追踪进度: 0%</span>
+    </div>
+    
+    <div id="terminal">
+        <div id="output"></div>
+        <div id="input-line">
+            <span id="prompt">root@cornell:~#</span>
+            <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" autofocus>
+        </div>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        const cmdInput = document.getElementById('cmd-input');
+        const loadDisplay = document.getElementById('load-display');
+        const fbiDisplay = document.getElementById('fbi-trace');
+        const terminal = document.getElementById('terminal');
+        const rewindOverlay = document.getElementById('rewind-overlay');
+        const dialogueText = document.getElementById('dialogue-text');
+
+        let state = {
+            isTyping: false,
+            phase: 'intro',
+            fbiProgress: 0,
+            cpuLoad: 0.05,
+            isLogCleared: false,
+            mailInterval: null,
+            systemTickInterval: null
+        };
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        function startSystemTick() {
+            state.systemTickInterval = setInterval(() => {
+                if (state.phase === 'repairing' || state.phase === 'collapsed') {
+                    state.cpuLoad += 0.08;
+                    if (state.cpuLoad > 20) terminal.classList.add('shake');
+                    if (state.cpuLoad > 50 && state.phase !== 'collapsed') {
+                        state.phase = 'collapsed';
+                        triggerMailFlood();
+                    }
+                    loadDisplay.innerText = `CPU负载: ${state.cpuLoad.toFixed(2)}`;
+                }
+
+                if (state.phase === 'hiding' && !state.isLogCleared) {
+                    state.fbiProgress += 1;
+                    fbiDisplay.innerText = `FBI追踪进度: ${state.fbiProgress}%`;
+                    if (state.fbiProgress >= 100) gameOver("FBI 锁定了你的IP。");
+                }
+            }, 1000);
+        }
+        startSystemTick();
+
+        cmdInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !state.isTyping) {
+                const cmd = this.value.trim().toLowerCase();
+                this.value = '';
+                handleCommand(cmd);
+            }
+        });
+
+        function handleCommand(cmd) {
+            if (state.phase === 'collapsed' && Math.random() > 0.5) {
+                cmd = cmd.replace(/./g, (c, i) => Math.random() > 0.7 ? ['#','@','!','?'][Math.floor(Math.random()*4)] : c);
+            }
+            
+            echoText(`root@cornell:~# ${cmd}`, "user-cmd");
+
+            if (state.phase === 'intro') {
+                if (cmd === './worm') releaseWorm();
+                else typeText("程序已编译完成。请执行 './worm' 开始测试。", "sys-msg");
+            } 
+            else if (state.phase === 'hiding') {
+                if (cmd === 'rm -rf /var/log/lastlog' || cmd === 'clear logs') {
+                    state.isLogCleared = true;
+                    typeText("日志已擦除。追踪断开。但系统负载异常升高...", "sys-msg", () => {
+                        state.phase = 'repairing';
+                        typeText("\n[系统告警] 收到大量垃圾邮件。尝试输入 'patch' 发送补丁邮件挽救。", "alert-msg");
+                    });
+                }
+            }
+            else if (state.phase === 'repairing' || state.phase === 'collapsed') {
+                if (cmd === 'patch') {
+                    typeText("正在尝试分发补丁邮件...", "sys-msg", async () => {
+                        await sleep(1000);
+                        typeText("FATAL ERROR: 邮件队列满。带宽耗尽。已无力回天。", "critical", () => {
+                            triggerRewindSequence();
+                        });
+                    });
+                }
+            }
+            else if (state.phase === 'rewinded') {
+                if (cmd === 'rm worm' || cmd === 'rm -rf worm') {
+                    deleteWorm();
+                } else if (cmd === './worm') {
+                    typeText("你刚经历了一场灾难，确定还要重蹈覆辙吗？请输入 'rm worm' 销毁它。", "alert-msg");
+                } else {
+                    typeText("它还静静地躺在硬盘里。输入 'rm worm' 彻底删除这个祸害。", "sys-msg");
+                }
+            }
+        }
+
+        function releaseWorm() {
+            state.isTyping = true;
+            typeText("正在将 Payload 注入 ARPANET 底层...", "sys-msg", async () => {
+                await sleep(1000);
+                output.innerHTML = '';
+                document.body.style.backgroundColor = "#200";
+                typeText("!!! 警报：ARPANET 瘫痪 !!!\n代码存在无限复制Bug，它已经失控了！FBI开始溯源！\n快输入 'rm -rf /var/log/lastlog' 擦除日志掩盖痕迹！", "alert-msg", () => {
+                    state.phase = 'hiding';
+                    state.isTyping = false;
+                });
+            });
+        }
+
+        function triggerMailFlood() {
+            if (state.mailInterval) return;
+            state.mailInterval = setInterval(() => {
+                const mailLogs = [
+                    ">> Incoming Mail: QUEUE FULL",
+                    ">> DEBUG: sendmail buffer overflow",
+                    ">> ERROR: Connection refused by MILNET",
+                    ">> ALERT: System Out of Memory"
+                ];
+                const line = document.createElement('div');
+                line.className = "log-line mail-flood";
+                line.innerText = mailLogs[Math.floor(Math.random() * mailLogs.length)];
+                output.appendChild(line);
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 400);
+        }
+
+        async function triggerRewindSequence() {
+            state.isTyping = true;
+            document.getElementById('input-line').style.display = 'none';
+
+            clearInterval(state.mailInterval);
+            clearInterval(state.systemTickInterval);
+            terminal.classList.remove('shake');
+
+            await sleep(1500);
+            
+            // 修复：先让它显示，再渐变，防止被 CSS 阻断
+            rewindOverlay.style.display = 'flex';
+            setTimeout(() => { rewindOverlay.style.opacity = 1; }, 50);
+            
+            document.body.style.backgroundColor = "#0a0a0a"; 
+
+            const lines = [
+                "“朋友，我闯大祸了。”",
+                "“什么事？”",
+                "“你看到网上的消息了吗？”",
+                "“看到了呀，这东西……我邮件发不出去。”",
+                "“……哥，帮帮我。”",
+                "“这代码是我写的。”",
+                "“我也不希望变成这样。”",
+                "“你能补救吗？……喂？喂？”"
+            ];
+
+            await sleep(2000);
+
+            for (let line of lines) {
+                dialogueText.innerText = line;
+                dialogueText.style.opacity = 1;
+                let waitTime = line.includes("……") ? 3000 : 2200;
+                await sleep(waitTime); 
+                dialogueText.style.opacity = 0;
+                await sleep(1000); 
+            }
+
+            dialogueText.style.fontFamily = "'Courier New', Courier, monospace";
+            dialogueText.style.color = "#4af626";
+            dialogueText.style.letterSpacing = "normal";
+            dialogueText.innerText = "[ 时空发生塌缩 ]\n[ 记忆留存：确认 ]\n[ 重置至灾难触发前：1988年11月2日 ]";
+            dialogueText.style.opacity = 1;
+            await sleep(3500);
+            dialogueText.style.opacity = 0;
+            await sleep(1500);
+
+            resetGameEnvironment();
+        }
+
+        function resetGameEnvironment() {
+            rewindOverlay.style.opacity = 0;
+            setTimeout(() => { rewindOverlay.style.display = 'none'; }, 1500);
+            
+            output.innerHTML = '';
+            
+            state = {
+                isTyping: false,
+                phase: 'rewinded',
+                fbiProgress: 0,
+                cpuLoad: 0.05,
+                isLogCleared: false,
+                mailInterval: null,
+                systemTickInterval: null
+            };
+            
+            loadDisplay.innerText = `CPU负载: 0.05`;
+            fbiDisplay.innerText = `FBI追踪进度: 0%`;
+            document.getElementById('input-line').style.display = 'flex';
+
+            typeText("你大汗淋漓地坐在显示器前。手指正悬停在回车键上方。\n屏幕上光标闪烁，如同命运的倒计时。\n刚刚的一切仿佛是一场过于真实的噩梦。\n你知道如果输入 ./worm 会发生什么。\n\n[系统提示]: 悬崖勒马。输入 'rm worm' 将这头怪兽彻底销毁。", "sys-msg");
+        }
+
+        function deleteWorm() {
+            state.isTyping = true;
+            document.getElementById('input-line').style.display = 'none';
+            
+            typeText("> rm worm", "user-cmd", async () => {
+                await sleep(800);
+                typeText("正在移除二进制文件...", "sys-msg", async () => {
+                    await sleep(1000);
+                    typeText("正在覆写扇区以防恢复...", "sys-msg", async () => {
+                        await sleep(1500);
+                        typeText("\n[ 目标已销毁 ]\n互联网保住了它的宁静。\n六千台服务器的维护人员今晚可以安然入睡。\n而你，罗伯特，永远埋藏了这个秘密。", "success-msg", () => {
+                            state.phase = 'victory';
+                            state.isTyping = false;
+                        });
+                    });
+                });
+            });
+        }
+
+        function typeText(text, className = '', callback = null) {
+            state.isTyping = true;
+            const line = document.createElement('div');
+            line.className = `log-line ${className}`;
+            output.appendChild(line);
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    line.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+                    i++;
+                    terminal.scrollTop = terminal.scrollHeight;
+                    setTimeout(type, 20);
+                } else {
+                    state.isTyping = false;
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+
+        function echoText(text, className = '') {
+            const line = document.createElement('div');
+            line.className = `log-line ${className}`;
+            line.innerText = text;
+            output.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function gameOver(reason) {
+            document.body.innerHTML = `<div style="text-align:center; margin-top:20vh; color:red;">
+                <h1>GAME OVER</h1>
+                <p>${reason}</p>
+                <button onclick="location.reload()" style="background:none; color:white; border:1px solid white; padding:10px; font-family:'Courier New'; cursor:pointer;">重新连线</button>
+            </div>`;
+        }
+
+        window.onload = () => {
+            typeText("System login: root\n终端连接已建立。请执行 './worm' 开始测试。", "sys-msg");
+        }
+    </script>
+</body>
+</html>
